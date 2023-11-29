@@ -14,7 +14,10 @@ ctk.set_default_color_theme("blue")
 
 root.title('Youtube Downloader')   # for title
 root.geometry("720x480")   # for the size
-root.resizable(False, False)  # for not resizing the window
+root.geometry("800x600")   # for the size
+root.minsize(800, 600)
+root.maxsize(1080, 720)
+
 
 
 # status bar
