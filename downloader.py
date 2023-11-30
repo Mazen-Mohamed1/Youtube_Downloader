@@ -4,7 +4,8 @@ from pytube import YouTube
 import threading   # to make the app lighter
 import customtkinter as ctk
 from tkinter import ttk
-
+import moviepy.editor as mp
+import os
 
 
 root = ctk.CTk()
@@ -13,12 +14,9 @@ ctk.set_default_color_theme("blue")
 
 
 root.title('Youtube Downloader')   # for title
-root.geometry("720x480")   # for the size
 root.geometry("800x600")   # for the size
 root.minsize(800, 600)
 root.maxsize(1080, 720)
-
-
 
 # status bar
 
@@ -82,7 +80,7 @@ folderLink.config(highlightthickness=9)
 
 # browse button
 
-browse = Button(root, text="Browse", command=browse,font=("Arial", 14),bg="#b32136", fg="white")
+browse = Button(root, text="Browse", command=browse, font=("Arial", 14),bg="#b32136", fg="white")
 browse.place(x = 700, y = 200)
 
 
@@ -126,14 +124,41 @@ audio_btn.config(highlightthickness=5)
 
 # download function
 def down_yt():
-    try:
-        status.config(text="STATUS: Downloading....")
-        link = ytLink.get()
-        folder = folderLink.get()
-        resolution = resolution_combobox.get()
-        YouTube(link, on_complete_callback=finish).streams.filter(res=resolution).order_by("resolution").desc().first().download(folder)
-    except:
-        status.config(text="STATUS: Something went wrong restart the app")
+        try:
+            status.config(text="STATUS: Downloading....")
+            current_dir = os.chdir(os.path.dirname(os.path.abspath(__file__)))
+            link = ytLink.get()
+            folder = folderLink.get()
+            resolution = resolution_combobox.get()
+            if resolution in ["144p", "360p", "480p","720p"]:
+                YouTube(link, on_complete_callback=finish).streams.filter(res=resolution, progressive=True).order_by("resolution").desc().first().download(folder)
+            else:
+                dvideo = YouTube(link).streams.filter(res=resolution).order_by("resolution").desc().first().download(current_dir)
+                daudio = YouTube(link).streams.filter(only_audio=True).first().download(current_dir)
+                dtitle = YouTube(link).title
+            # combine them
+
+
+                videoclip = mp.VideoFileClip(dvideo)
+                audioclip = mp.AudioFileClip(daudio)
+
+                final_clip = videoclip.set_audio(audioclip)
+
+
+                output_path = os.path.join(fr'{folder}\{dtitle}.mp4')
+                final_clip.write_videofile(output_path, codec='libx264')
+
+
+                os.remove(dvideo)
+                os.remove(daudio)
+
+                status.config(text="STATUS: Downloaded Successfully")
+
+        except:
+                status.config(text="STATUS: Something went wrong restart the app")
+
+
+
 
 
 # download button
@@ -146,3 +171,4 @@ download.config(highlightthickness=5)
 
 
 root.mainloop()
+
